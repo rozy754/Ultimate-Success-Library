@@ -6,7 +6,7 @@ A full-stack productivity and study platform designed for students. Ultimate Suc
 
 ## 📑 Table of Contents
 - [About the Project](#about-the-project)
-- [Features](#Features)
+- [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
@@ -116,6 +116,6 @@ Access the live app via the deployed URL
 
 ## 📬 Contact
 Ultimate Success Library – Built with passion for productivity.
-GitHub: yourusername
-LinkedIn: Your Name
-Email: yourname@example.com
+GitHub: rozy754
+LinkedIn: rozy koranga
+Email: rozykoranga@example.com
