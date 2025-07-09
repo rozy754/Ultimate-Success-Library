@@ -8,7 +8,7 @@ A full-stack productivity and study platform designed for students. Ultimate Suc
 - [About the Project](#-about-the-project)
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
-- [Usage](#-Usage)
+- [Usage](#%EF%B8%8F-Usage)
 - [Contact](#-Contact)
 
 ---
