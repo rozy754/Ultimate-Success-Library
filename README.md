@@ -59,7 +59,6 @@ Ultimate Success Library is a comprehensive platform that helps students manage 
 ## 🛠️ Installation
 
 ### Clone the repository:
-``bash
 git clone https://github.com/yourusername/ultimate-success-library.git
 cd ultimate-success-library
 Install dependencies
