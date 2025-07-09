@@ -5,11 +5,11 @@ A full-stack productivity and study platform designed for students. Ultimate Suc
 ---
 
 ## 📑 Table of Contents
-- [About the Project](#about-the-project)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Usage](#usage)
-- [Contact](#contact)
+- [About the Project] (#about-the-project)
+- [Features] (#features)
+- [Tech Stack] (#tech-stack)
+- [Usage] (#usage)
+- [Contact] (#contact)
 
 ---
 
@@ -56,25 +56,25 @@ Start the development server
 bash
 Copy
 Edit
-# Backend
+### Backend
 cd server
 npm run dev
 
-# Frontend
+### Frontend
 cd ../client
 npm start
 Open your browser at: http://localhost:3000
 
-## Student Workflow:
+### Student Workflow:
 Sign up and log in
 Access dashboard, to-do list, and progress tracker
 Subscribe to a study plan
 
-## Admin Workflow:
+### Admin Workflow:
+
 Log in as admin
 Manage students, subscriptions, and seating
 Send notifications and view revenue analytics
----
 
 ## 📬 Contact
 Ultimate Success Library – Built with passion for productivity.
