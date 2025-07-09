@@ -6,7 +6,7 @@ A full-stack productivity and study platform designed for students. Ultimate Suc
 
 ## 📑 Table of Contents
 - [About the Project](#about-the-project)
-- [Features](#features)
+- [Features](#Features)
 - [Tech Stack](#tech-stack)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
