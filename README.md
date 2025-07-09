@@ -59,13 +59,11 @@ Ultimate Success Library is a comprehensive platform that helps students manage 
 ## 🛠️ Installation
 
 ### Clone the repository:
-```bash
+``bash
 git clone https://github.com/yourusername/ultimate-success-library.git
 cd ultimate-success-library
 Install dependencies
-bash
-Copy
-Edit
+
 # Backend
 cd server
 npm install
@@ -73,12 +71,9 @@ npm install
 # Frontend
 cd ../client
 npm install
-🔐 Environment Variables
-Create a .env file in the /server directory and add the following:
 
-env
-Copy
-Edit
+## 🔐 Environment Variables
+Create a .env file in the /server directory and add the following:
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 RAZORPAY_KEY_ID=your_razorpay_key_id
@@ -86,7 +81,7 @@ RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 CLIENT_URL=http://localhost:3000
 ⚠️ Important: Never expose your environment variables in public repositories. Use .env locally and configure them securely in deployment.
 
-▶️ Usage
+## ▶️ Usage
 Start the development server
 bash
 Copy
@@ -100,73 +95,27 @@ cd ../client
 npm start
 Open your browser at: http://localhost:3000
 
-Student Workflow:
+## Student Workflow:
 Sign up and log in
-
 Access dashboard, to-do list, and progress tracker
-
 Subscribe to a study plan
 
-Admin Workflow:
+## Admin Workflow:
 Log in as admin
-
 Manage students, subscriptions, and seating
-
 Send notifications and view revenue analytics
 
-🚀 Deployment
+## 🚀 Deployment
 The project can be deployed on platforms like Vercel, Render, or Heroku.
 
-To deploy:
+## To deploy:
 Connect your GitHub repo to the platform
-
 Add environment variables (same as your local .env)
-
 Deploy frontend and backend
-
 Access the live app via the deployed URL
 
-🤝 Contributing
-Contributions are welcome! Follow these steps:
-
-Fork & Clone
-bash
-Copy
-Edit
-git clone https://github.com/yourusername/ultimate-success-library.git
-cd ultimate-success-library
-git checkout -b feature-name
-Make changes, commit, and push
-bash
-Copy
-Edit
-git add .
-git commit -m "Add feature: description"
-git push origin feature-name
-Create a Pull Request
-Go to the original repo
-
-Click on Compare & pull request
-
-Add a title and description
-
-Submit for review
-
-Guidelines:
-Follow clean coding practices
-
-Write meaningful commit messages
-
-Test your changes before submitting
-
-📄 License
-This project is licensed under the MIT License.
-
-📬 Contact
+## 📬 Contact
 Ultimate Success Library – Built with passion for productivity.
-
 GitHub: yourusername
-
 LinkedIn: Your Name
-
 Email: yourname@example.com
