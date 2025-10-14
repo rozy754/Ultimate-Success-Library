@@ -9,15 +9,20 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-    async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: "http://localhost:5000/api/:path*",
-      },
-    ];
+
+  async rewrites() {
+    // ✅ only apply proxy during local development
+    if (process.env.NODE_ENV === "development") {
+      return [
+        {
+          source: "/api/:path*",
+          destination: "http://localhost:5000/api/:path*",
+        },
+      ];
+    }
+    // ✅ in production, no rewrites — Next uses real API URL
+    return [];
   },
-}
+};
 
-export default nextConfig
-
+export default nextConfig;

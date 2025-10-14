@@ -15,7 +15,7 @@ export default function PaymentSuccess() {
         </p>
         <div className="space-y-3">
           <Button asChild className="w-full">
-            <Link href="/dashboard">Go to Dashboard</Link>
+            <Link href="/library">Go to Dashboard</Link>
           </Button>
           <Button variant="outline" asChild className="w-full">
             <Link href="/">Back to Home</Link>

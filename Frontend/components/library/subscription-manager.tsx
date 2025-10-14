@@ -48,7 +48,7 @@ export function SubscriptionManager() {
   }, [toast])
 
   const subscriptionPlans = [
-    { name: "Daily Pass", price: 50, duration: "1 Day", features: ["Full Library Access", "Study Room", "Wi-Fi"], popular: false, savings: null },
+    { name: "Daily Pass", price: 2, duration: "1 Day", features: ["Full Library Access", "Study Room", "Wi-Fi"], popular: false, savings: null },
     { name: "Weekly Pass", price: 300, duration: "7 Days", features: ["Full Library Access", "Study Room", "Wi-Fi", "Doubt Sessions"], popular: true, savings: "Save ₹50" },
     { name: "Monthly Pass", price: 1000, duration: "30 Days", features: ["Full Library Access", "Study Room", "Wi-Fi", "Doubt Sessions", "Progress Tracking"], popular: false, savings: "Save ₹300" },
   ]

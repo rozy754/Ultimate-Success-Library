@@ -57,12 +57,18 @@ export const authenticate = asyncHandler(
       }
 
       // ✅ If access token expired, try to refresh
-      if (tokenExpired && refreshToken) {
+    if ((tokenExpired || !accessToken) && refreshToken) {
+        console.log("🎫 Access token expired check triggered");
+        console.log("🔁 Refresh token present:", !!refreshToken);
         try {
           const refreshDecoded = verifyRefreshToken(refreshToken);
+          console.log("🧩 Refresh token decoded:", refreshDecoded);
+
           
           // Find user
           const user = await User.findById(refreshDecoded.sub).select("-passwordHash");
+          console.log("👤 User found for refresh:", user ? "YES" : "NO");
+
           
           if (!user) {
             return res.status(401).json({

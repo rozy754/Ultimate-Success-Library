@@ -101,7 +101,6 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
       message: "Not authenticated",
     });
   }
-
   res.status(200).json({
     success: true,
     message: "Current user retrieved successfully",

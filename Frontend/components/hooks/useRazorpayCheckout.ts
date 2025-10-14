@@ -44,8 +44,16 @@ export function useRazorpayCheckout() {
         image: "https://razorpay.com/favicon.png",
         handler: async function (response: any) {
           try {
+            // map Razorpay response -> backend expected shape and include plan
+            const verifyPayload = {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+              plan: planType,
+            }
+
             // Step 3: Verify payment
-            await paymentApi.verifyPayment(response)
+            await paymentApi.verifyPayment(verifyPayload)
             toast({ title: "Payment Successful 🎉" })
             router.push("/payment/success")
           } catch (err: any) {

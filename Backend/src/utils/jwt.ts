@@ -3,49 +3,55 @@ import env from "../config/env";
 import { Response } from "express";
 import User from "../modules/users/user.model"; // 👈 for validateRefreshToken
 
-// Load secrets and expirations directly from env
+// ==============================
+// 🔐 Secrets and Expiration
+// ==============================
 const ACCESS_SECRET = env.JWT_ACCESS_SECRET as Secret;
 const REFRESH_SECRET = env.JWT_REFRESH_SECRET as Secret;
 const ACCESS_EXP = env.ACCESS_TOKEN_EXPIRES;   // e.g. "15m"
 const REFRESH_EXP = env.REFRESH_TOKEN_EXPIRES; // e.g. "7d"
 
+// ==============================
+// 🔑 Interfaces
+// ==============================
 export interface TokenPayload {
-  sub: string; 
-  role: string; 
+  sub: string;
+  role: string;
 }
 
 export type DecodedToken = JwtPayload & TokenPayload;
 
+// ==============================
+// 🧾 Signers
+// ==============================
 const baseSign = (
   payload: TokenPayload,
   secret: Secret,
   expiresIn: string | number,
   overrides: SignOptions = {}
 ): string => {
-  const options: SignOptions = {
-     expiresIn: expiresIn as any,
-    ...overrides,
-  };
+  const options: SignOptions = { expiresIn: expiresIn as SignOptions["expiresIn"], ...overrides };
   return jwt.sign(payload, secret, options);
 };
 
-// ---- Signers ----
 export const signAccessToken = (payload: TokenPayload) =>
   baseSign(payload, ACCESS_SECRET, ACCESS_EXP);
 
 export const signRefreshToken = (payload: TokenPayload) =>
   baseSign(payload, REFRESH_SECRET, REFRESH_EXP);
 
-// ---- Verifiers ----
+// ==============================
+// 🔍 Verifiers
+// ==============================
 export const verifyAccessToken = (token: string): DecodedToken =>
   jwt.verify(token, ACCESS_SECRET) as DecodedToken;
 
 export const verifyRefreshToken = (token: string): DecodedToken =>
   jwt.verify(token, REFRESH_SECRET) as DecodedToken;
 
-/**
- * 🔐 Validate refresh token with passwordChangedAt check
- */
+// ==============================
+// 🔐 Validate Refresh Token
+// ==============================
 export const validateRefreshToken = async (token: string): Promise<DecodedToken> => {
   const decoded = verifyRefreshToken(token);
 
@@ -64,7 +70,9 @@ export const validateRefreshToken = async (token: string): Promise<DecodedToken>
   return decoded;
 };
 
-// ---- Cookie helpers ----
+// ==============================
+// 🍪 Cookie Helpers
+// ==============================
 interface SetTokenCookiesOptions {
   accessToken: string;
   refreshToken?: string;
@@ -72,43 +80,55 @@ interface SetTokenCookiesOptions {
   refreshMaxAgeMs?: number;
 }
 
+/**
+ * ✅ Automatically adjusts cookie settings for localhost and production
+ */
 export const setAuthCookies = (
   res: Response,
   {
     accessToken,
     refreshToken,
-    accessMaxAgeMs = 15 * 60 * 1000,         // 15m
+    accessMaxAgeMs = 15 * 60 * 1000, // 15m
     refreshMaxAgeMs = 7 * 24 * 60 * 60 * 1000, // 7d
   }: SetTokenCookiesOptions
 ) => {
   const isProd = env.NODE_ENV === "production";
 
-  // ✅ Fixed: Remove domain restriction for localhost
+  // Chrome rules:
+  // - SameSite=None requires Secure=true
+  // - Localhost (HTTP) cannot use Secure
   const cookieOptions = {
     httpOnly: true,
-    sameSite: "lax" as const,
-    secure: false, // false for http://localhost
+    sameSite: isProd ? ("none" as const) : ("lax" as const),
+    secure: isProd, // ✅ HTTPS only in production
     path: "/",
-   
   };
 
+  console.log("🌍 Environment:", env.NODE_ENV);
+  console.log("🍪 Cookie options applied:", cookieOptions);
+
+  // Access Token
   res.cookie("access_token", accessToken, {
     ...cookieOptions,
     maxAge: accessMaxAgeMs,
   });
+  console.log("✅ access_token cookie set");
 
-  console.log("🍪 Setting access_token cookie");
-
+  // Refresh Token
   if (refreshToken) {
     res.cookie("refresh_token", refreshToken, {
       ...cookieOptions,
       maxAge: refreshMaxAgeMs,
     });
-    console.log("🍪 Setting refresh_token cookie");
+    console.log("✅ refresh_token cookie set");
   }
 };
 
+// ==============================
+// 🧹 Clear Cookies
+// ==============================
 export const clearAuthCookies = (res: Response) => {
   res.clearCookie("access_token", { path: "/" });
   res.clearCookie("refresh_token", { path: "/" });
+  console.log("🧹 Cleared auth cookies");
 };
