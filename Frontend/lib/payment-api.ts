@@ -27,9 +27,9 @@ export interface PaymentHistoryItem {
 
 // ---------- API Functions ----------
 export const paymentApi = {
-  createOrder: async (planType: string, amount: number): Promise<OrderResponse> => {
-    console.log("🔗 API createOrder called with:", { planType, amount })
-    return api.post<OrderResponse>("/payment/create-order", { plan: planType, amount })
+  createOrder: async (plan: string, amount: number): Promise<OrderResponse> => {
+    console.log("🔗 API createOrder called with:", { plan, amount })
+    return api.post<OrderResponse>("/payment/create-order", { plan, amount })
   },
 
   // Accept backend-shaped payload ({ orderId, paymentId, signature, plan })
@@ -37,17 +37,13 @@ export const paymentApi = {
     orderId?: string
     paymentId?: string
     signature?: string
-    // accept old razorpay_* keys too if needed
-    razorpay_order_id?: string
-    razorpay_payment_id?: string
-    razorpay_signature?: string
     plan?: string
   }): Promise<VerifyPaymentResponse> => {
     // normalize to backend expected keys
     const payload = {
-      orderId: paymentData.orderId ?? paymentData.razorpay_order_id,
-      paymentId: paymentData.paymentId ?? paymentData.razorpay_payment_id,
-      signature: paymentData.signature ?? paymentData.razorpay_signature,
+      orderId: paymentData.orderId,
+      paymentId: paymentData.paymentId,
+      signature: paymentData.signature,
       plan: paymentData.plan,
     }
     return api.post<VerifyPaymentResponse>("/payment/verify", payload)

@@ -28,7 +28,7 @@ export function LibraryNavbar() {
     { href: "/library/todos", label: "Daily Goals", icon: CheckSquare },
     { href: "/library/progress", label: "Progress", icon: TrendingUp },
     { href: "/library/subscription", label: "Subscription", icon: CreditCard },
-    { href: "/library/feedback", label: "Feedback", icon: MessageSquare },
+    { href: "/library/feedback", label: "Feedback & Support", icon: MessageSquare },
   ]
 
   return (
@@ -56,6 +56,16 @@ export function LibraryNavbar() {
                 </Link>
               )
             })}
+
+            {/* Main site link to root (added) */}
+            <Link
+              href="/"
+              className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+            </Link>
+
             <div className="flex items-center space-x-2">
               <ThemeToggle />
               <Button variant="outline" onClick={handleLogout} className="flex items-center space-x-1 bg-transparent">
@@ -92,6 +102,17 @@ export function LibraryNavbar() {
                   </Link>
                 )
               })}
+
+              {/* Main site link in mobile menu (added) */}
+              <Link
+                href="/"
+                className="flex items-center space-x-2 px-3 py-2 text-foreground hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Home className="h-4 w-4" />
+                <span>Main Site</span>
+              </Link>
+
               <Button
                 variant="outline"
                 onClick={handleLogout}

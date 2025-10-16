@@ -1,8 +1,7 @@
 "use client"
 
-import type React from "react"
+import React, { useState } from "react"
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,18 +23,90 @@ export function FeedbackForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
+  const saveTestimonialToLocal = (testimonial: any) => {
+    try {
+      const key = "testimonials"
+      const raw = localStorage.getItem(key)
+      const existing = raw ? JSON.parse(raw) : []
+      existing.unshift(testimonial)
+      localStorage.setItem(key, JSON.stringify(existing))
+      window.dispatchEvent(new Event("testimonials-updated"))
+    } catch {}
+  }
+
+  const saveFeedbackFallback = (feedback: any) => {
+    try {
+      const key = "feedbacks"
+      const raw = localStorage.getItem(key)
+      const existing = raw ? JSON.parse(raw) : []
+      existing.unshift(feedback)
+      localStorage.setItem(key, JSON.stringify(existing))
+      // optional event:
+      window.dispatchEvent(new Event("feedbacks-updated"))
+    } catch {}
+  }
+
+  const genId = () => {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      try {
+        // @ts-ignore
+        return crypto.randomUUID()
+      } catch {}
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Mock form submission
+    const payload = {
+      id: genId(),
+      name: formData.name || "Anonymous",
+      email: formData.email || "",
+      category: formData.category,
+      subject: formData.subject || "",
+      message: formData.message || "",
+      rating: rating || 0,
+      timestamp: Date.now(),
+    }
+
+    if (formData.category === "general") {
+      const testimonial = {
+        id: payload.id,
+        name: payload.name,
+        rating: payload.rating,
+        content: payload.message || payload.subject || "",
+        subject: payload.subject || undefined,
+        role: "Guest User",
+        company: "Independent",
+        timestamp: payload.timestamp,
+      }
+      saveTestimonialToLocal(testimonial)
+    } else {
+      // send to backend to email admin
+      try {
+        const backend = (process.env.NEXT_PUBLIC_BACKEND_URL as string) || "http://localhost:5000"
+        const res = await fetch(`${backend}/api/feedback`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+        if (!res.ok) {
+          throw new Error("Failed to send feedback to server")
+        }
+      } catch (err) {
+        // fallback: store locally
+        saveFeedbackFallback(payload)
+      }
+    }
+
     setTimeout(() => {
       toast({
         title: "Feedback Submitted",
         description: "Thank you for your feedback! We'll review it and get back to you soon.",
       })
 
-      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -45,7 +116,7 @@ export function FeedbackForm() {
       })
       setRating(0)
       setIsSubmitting(false)
-    }, 1000)
+    }, 800)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -132,7 +203,7 @@ export function FeedbackForm() {
 
             {/* Category */}
             <div className="space-y-2">
-              <Label htmlFor="category">Feedback Category</Label>
+              <Label htmlFor="category">Category</Label>
               <select
                 id="category"
                 name="category"

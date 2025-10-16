@@ -10,24 +10,46 @@ export const getCurrentSubscription = async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
+    // ✅ Get latest subscription
     const subscription = await subscriptionService.getCurrentSubscription(
       new mongoose.Types.ObjectId(userId)
     );
 
     if (!subscription) {
-      return res.json({ subscription: null, daysRemaining: 0 });
+      return res.status(200).json({
+        success: true,
+        data: null,
+        message: "No active subscription found",
+      });
     }
 
-let daysRemaining = subscriptionService.calculateDaysRemaining(subscription.expiryDate);
-if (subscription.status === "Expired") {
-  daysRemaining = 0;
-}
-res.json({ subscription, daysRemaining });
+    // ✅ Calculate days remaining
+    let daysRemaining = subscriptionService.calculateDaysRemaining(subscription.expiryDate);
+
+    // ✅ If expired, set status to Expired
+    if (subscription.status === "Expired") {
+      daysRemaining = 0;
+    }
+
+    // ✅ Return clean, frontend-friendly object
+    return res.status(200).json({
+      success: true,
+      data: {
+        _id: subscription._id,
+        plan: subscription.plan,
+        status: subscription.status,
+        startDate: subscription.startDate,
+        expiryDate: subscription.expiryDate,
+        razorpayOrderId: subscription.razorpayOrderId,
+        razorpayPaymentId: subscription.razorpayPaymentId,
+        daysRemaining,
+      },
+    });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

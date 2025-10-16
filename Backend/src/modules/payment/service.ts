@@ -1,5 +1,6 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import Payment from "./model";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -11,7 +12,7 @@ const razorpay = new Razorpay({
  * @param amount plan ka price (₹ me)
  * @param plan subscription type (Daily/Weekly/Monthly)
  */
-export const createOrder = async (amount: number, plan: string) => {
+export const createOrder = async ( plan: string,amount: number) => {
   const options = {
     amount: amount * 100, // INR -> paise
     currency: "INR",
@@ -67,4 +68,12 @@ export const calculateExpiryDate = (plan: string): Date => {
   }
 
   return expiryDate;
+};
+
+/**
+ * Get payment history for a user
+ * @param userId User's unique identifier
+ */
+export const getPaymentHistory = async (userId: string) => {
+  return await Payment.find({ userId }).sort({ createdAt: -1 }).lean();
 };

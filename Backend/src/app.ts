@@ -2,11 +2,11 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./modules/auth/auth.routes";
-import env  from "./config/env";
+import env from "./config/env";
 import { errorHandler } from "./middleware/errorHandler";
 import paymentRoutes from "./modules/payment/route";
 import subscriptionRoutes from "./modules/subscription/route";
-import { includes } from "zod";
+import feedbackRoutes from "./modules/feedback/feedback.routes";
 export const app = express();
 
 // Body parsers
@@ -23,15 +23,10 @@ app.use(cors({
 }));
 
 // Routes
-// Remove authenticate and errorHandler from this mount.
-// They should not run for every /api/auth request by default.
 app.use("/api/auth", authRoutes);
-
-// payment routes
 app.use("/api/payment", paymentRoutes);
-
-//subscription routes
 app.use("/api/subscription", subscriptionRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 // TODO: add routes later in Step 4
 app.get("/", (_req, res) => {

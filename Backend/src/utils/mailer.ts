@@ -15,11 +15,29 @@ export async function sendMail(
     resetUrl: string
 ) {
     const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to,
-    subject: "Reset your password",
-    html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. Link valid for 15 minutes.</p>`,
-    text: `Reset your password: ${resetUrl}`,
+        from: process.env.EMAIL_FROM,
+        to,
+        subject: "Reset your password",
+        html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. Link valid for 15 minutes.</p>`,
+        text: `Reset your password: ${resetUrl}`,
+    };
+
+    return transporter.sendMail(mailOptions);
+}
+
+// new — generic sender for feedbacks / other emails
+export async function sendEmail(
+    to: string,
+    subject: string,
+    text: string,
+    html?: string
+) {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to,
+        subject,
+        text,
+        html: html || `<pre>${text}</pre>`,
     };
 
     return transporter.sendMail(mailOptions);

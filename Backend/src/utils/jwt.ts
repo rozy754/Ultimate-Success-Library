@@ -104,15 +104,13 @@ export const setAuthCookies = (
     path: "/",
   };
 
-  console.log("🌍 Environment:", env.NODE_ENV);
-  console.log("🍪 Cookie options applied:", cookieOptions);
 
   // Access Token
   res.cookie("access_token", accessToken, {
     ...cookieOptions,
     maxAge: accessMaxAgeMs,
   });
-  console.log("✅ access_token cookie set");
+  
 
   // Refresh Token
   if (refreshToken) {
@@ -120,7 +118,7 @@ export const setAuthCookies = (
       ...cookieOptions,
       maxAge: refreshMaxAgeMs,
     });
-    console.log("✅ refresh_token cookie set");
+   
   }
 };
 

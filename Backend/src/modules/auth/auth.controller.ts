@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import { registerSchema, loginSchema,forgotPasswordSchema,resetPasswordSchema } from "./auth.schema";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { z } from "zod";
+import { sendEmail } from "../../utils/mailer";
 type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 type RegisterInput = z.infer<typeof registerSchema>;
@@ -142,4 +143,14 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
     message: "Password updated successfully. Please log in again.",
   });
 });
+
+// Submit Feedback Controller
+export const submitFeedback = asyncHandler(async (req: Request, res: Response) => {
+  const { name, email, category, subject, message, rating, timestamp } = req.body || {}
+  const adminEmail = process.env.ADMIN_EMAIL || "rozykoranga@gmail.com"
+  const mailSubject = `[Feedback - ${category}] ${subject || "No Subject"}`
+  const text = `Name: ${name || "Anonymous"}\nEmail: ${email || "Not provided"}\nCategory: ${category}\nSubject: ${subject}\nRating: ${rating ?? "N/A"}\nMessage:\n${message || ""}\nTime: ${new Date(timestamp || Date.now()).toISOString()}`
+  await sendEmail(adminEmail, mailSubject, text)
+  res.status(200).json({ success: true, message: "Feedback emailed to admin" })
+})
 

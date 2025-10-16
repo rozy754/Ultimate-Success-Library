@@ -17,9 +17,6 @@ declare global {
 export const authenticate = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log("🍪 All cookies:", req.cookies);
-      console.log("🔑 Authorization header:", req.headers.authorization);
-      console.log("📍 Request URL:", req.url);
 
       // Get access token
       let accessToken = req.cookies?.access_token;
@@ -32,9 +29,7 @@ export const authenticate = asyncHandler(
         }
       }
 
-      console.log("🎫 Access Token found:", accessToken ? "YES" : "NO");
-      console.log("🔄 Refresh Token found:", refreshToken ? "YES" : "NO");
-
+      
       // Try to verify access token
       let decoded: DecodedToken | null = null;
       let tokenExpired = false;
@@ -67,7 +62,6 @@ export const authenticate = asyncHandler(
           
           // Find user
           const user = await User.findById(refreshDecoded.sub).select("-passwordHash");
-          console.log("👤 User found for refresh:", user ? "YES" : "NO");
 
           
           if (!user) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -26,6 +26,12 @@ export function LibraryDashboard() {
   const [showRenewalReminder, setShowRenewalReminder] = useState(false)
   const [stats, setStats] = useState<UserStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Ref to always read latest stats inside interval callback
+  const statsRef = useRef<UserStats | null>(null)
+  useEffect(() => {
+    statsRef.current = stats
+  }, [stats])
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
@@ -70,24 +76,32 @@ export function LibraryDashboard() {
     }
 
     fetchDashboardData()
+  }, [])
 
-    // Renewal reminder logic
-    const timer = setTimeout(() => {
+  // Show renewal reminder every 8 minutes while user is on this dashboard
+  useEffect(() => {
+    const checkAndShow = () => {
+      const s = statsRef.current
       const userData = localStorage.getItem("user")
-      if (userData) {
-        const user = JSON.parse(userData)
-        if (
-          user.role === "student" &&
-          stats?.subscriptionStatus === "Active" &&
-          stats?.daysRemaining <= 7
-        ) {
-          setShowRenewalReminder(true)
-        }
-      }
-    }, 3000)
+      const localUser = userData ? JSON.parse(userData) : null
 
-    return () => clearTimeout(timer)
-  }, [stats?.subscriptionStatus, stats?.daysRemaining])
+      if (
+        localUser?.role === "student" &&
+        s?.subscriptionStatus === "Active" &&
+        typeof s.daysRemaining === "number" &&
+        s.daysRemaining <= 7
+      ) {
+        setShowRenewalReminder(true)
+      }
+    }
+
+    // initial check immediately
+    checkAndShow()
+
+    const intervalId = setInterval(checkAndShow, 8*60*1000) // every 8 minutes
+
+    return () => clearInterval(intervalId)
+  }, []) // run once on mount
 
   const subscriptionPlans = [
     { name: "Daily Pass", price: "₹50", duration: "1 Day", features: ["Full Library Access", "Study Room", "Wi-Fi"], popular: false },
@@ -297,6 +311,8 @@ export function LibraryDashboard() {
       <RenewalReminderPopup
         isOpen={showRenewalReminder}
         onClose={() => setShowRenewalReminder(false)}
+        daysRemaining={stats?.daysRemaining ?? 0}
+        plan={stats?.subscriptionType ?? "Unknown Plan"}
       />
     </div>
   )
