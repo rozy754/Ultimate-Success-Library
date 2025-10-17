@@ -18,6 +18,10 @@ interface Todo {
   priority: "low" | "medium" | "high"
 }
 
+const TODOS_KEY = "library-todos"
+const LAST_TODO_DATE_KEY = "library-last-todo-date"
+const PROGRESS_KEY = "progressData" // { "YYYY-MM-DD": boolean }
+
 export function TodoManager() {
   const [todos, setTodos] = useState<Todo[]>([])
   const [isAddingTodo, setIsAddingTodo] = useState(false)
@@ -29,39 +33,33 @@ export function TodoManager() {
   })
   const { toast } = useToast()
 
+  const todayStr = new Date().toISOString().split("T")[0]
+
   useEffect(() => {
-    // Load todos from localStorage
-    const savedTodos = localStorage.getItem("library-todos")
-    if (savedTodos) {
-      setTodos(JSON.parse(savedTodos))
-    } else {
-      // Set some demo todos
-      const demoTodos: Todo[] = [
-        {
-          id: "1",
-          title: "Complete Data Structures Chapter",
-          description: "Read and practice problems from Chapter 5",
-          completed: false,
-          createdAt: new Date().toISOString(),
-          priority: "high",
-        },
-        {
-          id: "2",
-          title: "Review Algorithm Notes",
-          description: "Go through sorting and searching algorithms",
-          completed: true,
-          createdAt: new Date().toISOString(),
-          priority: "medium",
-        },
-      ]
-      setTodos(demoTodos)
-      localStorage.setItem("library-todos", JSON.stringify(demoTodos))
+    // Auto-reset todos each new day
+    const lastSavedDate = localStorage.getItem(LAST_TODO_DATE_KEY)
+    if (lastSavedDate !== todayStr) {
+      localStorage.setItem(LAST_TODO_DATE_KEY, todayStr)
+      localStorage.removeItem(TODOS_KEY)
+      setTodos([])
+      return
     }
-  }, [])
+
+    const savedTodos = localStorage.getItem(TODOS_KEY)
+    if (savedTodos) {
+      try {
+        setTodos(JSON.parse(savedTodos))
+      } catch {
+        setTodos([])
+      }
+    } else {
+      setTodos([])
+    }
+  }, [todayStr])
 
   const saveTodos = (updatedTodos: Todo[]) => {
     setTodos(updatedTodos)
-    localStorage.setItem("library-todos", JSON.stringify(updatedTodos))
+    localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos))
   }
 
   const addTodo = () => {
@@ -98,6 +96,9 @@ export function TodoManager() {
     const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo))
     saveTodos(updatedTodos)
 
+    // After toggling, update progressData if needed
+    updateProgressFromTodos(updatedTodos)
+
     const todo = todos.find((t) => t.id === id)
     toast({
       title: todo?.completed ? "Goal Unmarked" : "Goal Completed",
@@ -108,6 +109,7 @@ export function TodoManager() {
   const deleteTodo = (id: string) => {
     const updatedTodos = todos.filter((todo) => todo.id !== id)
     saveTodos(updatedTodos)
+    updateProgressFromTodos(updatedTodos)
 
     toast({
       title: "Goal Deleted",
@@ -119,12 +121,36 @@ export function TodoManager() {
     const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, ...updates } : todo))
     saveTodos(updatedTodos)
     setEditingTodo(null)
+    updateProgressFromTodos(updatedTodos)
 
     toast({
       title: "Goal Updated",
       description: "Your goal has been updated successfully.",
     })
   }
+
+  const updateProgressFromTodos = (currentTodos: Todo[]) => {
+    // Only mark today's date completed when there is at least one todo
+    // AND all todos are completed
+    const allCompleted = currentTodos.length > 0 && currentTodos.every((t) => t.completed)
+
+    const savedProgressRaw = localStorage.getItem(PROGRESS_KEY)
+    const savedProgress = savedProgressRaw ? JSON.parse(savedProgressRaw) : {}
+
+    // only update when value changes to avoid unnecessary events
+    if (savedProgress[todayStr] !== allCompleted) {
+      savedProgress[todayStr] = allCompleted
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(savedProgress))
+      // notify tracker to reload
+      window.dispatchEvent(new Event("progress-update"))
+    }
+  }
+
+  // Ensure progress is consistent on mount (for example: if user has pre-completed todos)
+  useEffect(() => {
+    updateProgressFromTodos(todos)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
