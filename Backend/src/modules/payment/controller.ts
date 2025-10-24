@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import * as paymentService from "./service";
-import Subscription from "../subscription/model"; // ✅ tumhare subscription model ka import
-import User from "../users/user.model"; // ✅ user ko update karne ke liye
+import Payment from "./model";
+import Subscription from "../subscription/model";
+import User from "../users/user.model";
 
 /**
  * Create a new Razorpay order
@@ -30,24 +31,22 @@ export const createOrder = async (req: Request, res: Response) => {
  */
 export const verifyPayment = async (req: Request, res: Response) => {
   try {
-    const { orderId, paymentId, signature, plan } = req.body;
-    const userId = (req as any).user?.id; // ✅ JWT middleware se aayega
+    const { orderId, paymentId, signature, plan } = req.body
+    const userId = (req as any).user?.id
+    if (!userId) return res.status(401).json({ error: "Unauthorized" })
+    if (!orderId || !paymentId || !signature || !plan)
+      return res.status(400).json({ error: "Missing required fields" })
 
-    if (!orderId || !paymentId || !signature || !plan) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+    const isValid = paymentService.verifyPayment(orderId, paymentId, signature)
+    if (!isValid) return res.status(400).json({ error: "Invalid payment signature" })
 
-    // ✅ 1. Verify payment
-    const isValid = paymentService.verifyPayment(orderId, paymentId, signature);
-    if (!isValid) {
-      return res.status(400).json({ error: "Invalid payment signature" });
-    }
+    const order = await paymentService.fetchOrderById(orderId)
+    const amountRupees = Math.round(Number(order?.amount || 0) / 100)
+    const currency = order?.currency || "INR"
 
-    // ✅ 2. Calculate expiry date
-    const startDate = new Date();
-    const expiryDate = paymentService.calculateExpiryDate(plan);
+    const startDate = new Date()
+    const expiryDate = paymentService.calculateExpiryDate(plan)
 
-    // ✅ 3. Save subscription in DB
     const subscription = await Subscription.create({
       userId,
       plan,
@@ -57,23 +56,30 @@ export const verifyPayment = async (req: Request, res: Response) => {
       razorpayOrderId: orderId,
       razorpayPaymentId: paymentId,
       razorpaySignature: signature,
-    });
+    })
 
-    // ✅ 4. Update user with current subscription
-    await User.findByIdAndUpdate(userId, { currentSubscription: subscription._id });
+    await User.findByIdAndUpdate(userId, { currentSubscription: subscription._id })
 
-    res.json({
-      success: true,
-      message: "Payment verified & subscription activated",
-      subscription,
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    const payment = await Payment.create({
+      userId,
+      orderId,
+      paymentId,
+      signature,
+      amount: amountRupees,
+      currency,
+      status: "Success",
+      plan,
+    })
+    console.log("✅ Payment record saved:", payment)
+
+    return res.json({ success: true, message: "Payment verified", subscription, payment })
+  } catch (err: any) {
+    console.error("verifyPayment error:", err)
+    return res.status(500).json({ error: err.message })
   }
 };
 
-  // 5.Get payment history for the logged-in user
- 
+// 5. Get payment history for the logged-in user
 export const getPaymentHistory = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
@@ -81,8 +87,8 @@ export const getPaymentHistory = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const subscriptions = await Subscription.find({ userId }).sort({ startDate: -1 });
-    res.json({ history: subscriptions });
+    const payments = await Payment.find({ userId }).sort({ createdAt: -1 });
+    res.json({ history: payments });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

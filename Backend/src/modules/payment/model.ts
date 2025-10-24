@@ -8,6 +8,10 @@ export interface IPayment extends Document {
   amount: number;
   currency: string;
   status: "Success" | "Failed";
+  plan : string;
+  createdAt: Date;
+  updatedAt: Date;
+
 }
 
 const paymentSchema = new Schema<IPayment>(
@@ -19,6 +23,13 @@ const paymentSchema = new Schema<IPayment>(
     amount: { type: Number, required: true },
     currency: { type: String, required: true },
     status: { type: String, enum: ["Success", "Failed"], required: true },
+    createdAt: { type: Date },
+    updatedAt: { type: Date },
+    plan: { 
+      type: String, 
+      enum: ["Daily Pass", "Weekly Pass", "Monthly Pass"], 
+      required: true 
+    },
   },
   { timestamps: true }
 );

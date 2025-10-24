@@ -6,19 +6,9 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react"
 
 export function TestimonialsSection() {
-  const [testimonials, setTestimonials] = useState(() => {
-    try {
-      if (typeof window === "undefined") return []
-      const raw = localStorage.getItem("testimonials")
-      const stored = raw ? JSON.parse(raw) : []
-      stored.sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0))
-      return stored.slice(0, 5)
-    } catch {
-      return []
-    }
-  })
-
+  const [testimonials, setTestimonials] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [mounted, setMounted] = useState(false)
 
   const loadFromStorage = () => {
     try {
@@ -33,6 +23,10 @@ export function TestimonialsSection() {
   }
 
   useEffect(() => {
+    // only run on client
+    setMounted(true)
+    loadFromStorage()
+
     const handler = () => loadFromStorage()
     window.addEventListener("testimonials-updated", handler)
 
@@ -57,6 +51,8 @@ export function TestimonialsSection() {
     setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length)
   }
 
+  // avoid rendering different HTML on server vs client
+  if (!mounted) return null
   if (!testimonials || testimonials.length === 0) return null
 
   return (

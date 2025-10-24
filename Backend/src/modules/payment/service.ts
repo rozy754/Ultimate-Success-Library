@@ -1,10 +1,11 @@
 import Razorpay from "razorpay";
-import crypto from "crypto";
+import * as crypto from "crypto";
 import Payment from "./model";
 
+// create (or reuse) your Razorpay instance
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+  key_id: process.env.RAZORPAY_KEY_ID as string,
+  key_secret: process.env.RAZORPAY_KEY_SECRET as string,
 });
 
 /**
@@ -34,6 +35,10 @@ export const verifyPayment = (
   paymentId: string,
   signature: string
 ): boolean => {
+  // if (process.env.NODE_ENV === "development") {
+  //   console.log("⚠️ MOCK MODE: Skipping signature verification");
+  //   return true;
+  // }
   const sign = orderId + "|" + paymentId;
 
   const expectedSign = crypto
@@ -49,25 +54,13 @@ export const verifyPayment = (
  * Calculate subscription expiry date based on plan
  * @param plan subscription type
  */
-export const calculateExpiryDate = (plan: string): Date => {
-  const startDate = new Date();
-  let expiryDate = new Date(startDate);
-
-  switch (plan) {
-    case "Daily Pass":
-      expiryDate.setDate(startDate.getDate() + 1);
-      break;
-    case "Weekly Pass":
-      expiryDate.setDate(startDate.getDate() + 7);
-      break;
-    case "Monthly Pass":
-      expiryDate.setMonth(startDate.getMonth() + 1);
-      break;
-    default:
-      throw new Error("Invalid subscription plan");
-  }
-
-  return expiryDate;
+export function calculateExpiryDate(plan: string): Date {
+  const d = new Date()
+  if (plan === "Daily Pass") d.setDate(d.getDate() + 1)
+  else if (plan === "Weekly Pass") d.setDate(d.getDate() + 7)
+  else if (plan === "Monthly Pass") d.setMonth(d.getMonth() + 1)
+  else d.setDate(d.getDate() + 1)
+  return d
 };
 
 /**
@@ -77,3 +70,9 @@ export const calculateExpiryDate = (plan: string): Date => {
 export const getPaymentHistory = async (userId: string) => {
   return await Payment.find({ userId }).sort({ createdAt: -1 }).lean();
 };
+
+// Fetch order by id (amount in paise from Razorpay)
+export async function fetchOrderById(orderId: string) {
+  const order = await razorpay.orders.fetch(orderId);
+  return order; // includes amount (paise), currency, status
+}

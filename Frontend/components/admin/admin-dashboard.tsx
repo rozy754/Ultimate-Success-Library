@@ -49,7 +49,9 @@ export function AdminDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{stats.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(stats.totalRevenue)}
+            </div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
@@ -137,7 +139,7 @@ export function AdminDashboard() {
                   <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">Revenue chart will be displayed here</p>
                   <p className="text-sm text-muted-foreground">
-                    Current month: ₹{stats.monthlyRevenue.toLocaleString()}
+                    Current month: {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(stats.monthlyRevenue)}
                   </p>
                 </div>
               </div>

@@ -1,39 +1,52 @@
-export const API_BASE_URL =  "/api"
+export const API_BASE_URL = "/api"
 
 type RequestOptions = Omit<RequestInit, "body"> & { body?: any; parseJson?: boolean }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}`
 
-  // ✅ Debug: Check all cookies and specifically auth cookies
-  console.log("🍪 All document cookies:", document.cookie)
-  console.log("🔐 Looking for access_token:", document.cookie.includes('access_token'))
-  console.log("🔐 Looking for refresh_token:", document.cookie.includes('refresh_token'))
+  // Debug cookies
+  console.log("🍪 document.cookie:", document.cookie)
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
   }
 
-  const init: RequestInit = {
-    method: options.method ?? (options.body ? "POST" : "GET"),
+  const fetchOptions: RequestInit = {
+    method: options.method || "GET",
     headers,
-    credentials: "include",
+    credentials: "include",               // ✅ send access_token/refresh_token cookies
   }
 
   if (options.body !== undefined) {
-    init.body = typeof options.body === "string" ? options.body : JSON.stringify(options.body)
+    fetchOptions.body = typeof options.body === "string"
+      ? options.body
+      : JSON.stringify(options.body)
   }
 
-  const res = await fetch(url, init)
-  const parseJson = options.parseJson !== false
-  const data = parseJson ? await res.json().catch(() => null) : null
+  const res = await fetch(url, fetchOptions)
+
+  // Try to parse JSON always
+  const contentType = res.headers.get("content-type") || ""
+  const isJson = contentType.includes("application/json")
+  const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null)
+
+  if (!res.ok) {
+    // Handle auth failures gracefully
+    if (res.status === 401 || res.status === 403) {
+      console.warn("Unauthorized/Forbidden. Redirecting to login.")
+      // Let caller handle error; do not return null to avoid UI crashes
+    }
+    const message = (isJson && data && (data.message || data.error)) || `HTTP ${res.status}`
+    throw new Error(message)
+  }
 
   return data as T
 }
 
 export const api = {
-  get: <T>(p: string) => request<T>(p),
+  get:  <T>(p: string) => request<T>(p),
   post: <T>(p: string, body?: any) => request<T>(p, { method: "POST", body }),
   put:  <T>(p: string, body?: any) => request<T>(p, { method: "PUT", body }),
   del:  <T>(p: string) => request<T>(p, { method: "DELETE" }),

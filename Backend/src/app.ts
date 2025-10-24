@@ -7,6 +7,9 @@ import { errorHandler } from "./middleware/errorHandler";
 import paymentRoutes from "./modules/payment/route";
 import subscriptionRoutes from "./modules/subscription/route";
 import feedbackRoutes from "./modules/feedback/feedback.routes";
+import adminRoutes from "./modules/admin/admin.routes";
+import whatsappRoutes from "./modules/whatsapp/route";
+
 export const app = express();
 
 // Body parsers
@@ -27,14 +30,17 @@ app.use("/api/auth", authRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/feedback", feedbackRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/whatsapp", whatsappRoutes);
 
-// TODO: add routes later in Step 4
+// ✅ Mount admin routes
+app.use("/api/admin", adminRoutes);
+
 app.get("/", (_req, res) => {
   res.send("Welcome to the API 🚀");
 });
 
-// 404 handler (Express 5 + path-to-regexp v6: "*" pattern invalid)
-// Use a naked middleware to catch any unmatched route
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -46,7 +52,7 @@ app.use((req, res) => {
 // Register your central error handler AFTER all routes.
 app.use(errorHandler);
 
-// Basic error handler (optional but recommended)
+// Basic error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err)
   res.status(err.status || 500).json({
