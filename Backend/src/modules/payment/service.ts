@@ -1,78 +1,85 @@
 import Razorpay from "razorpay";
-import * as crypto from "crypto";
-import Payment from "./model";
+import crypto from "crypto";
+import env from "../../config/env";
 
-// create (or reuse) your Razorpay instance
+if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
+  console.error("❌ RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is missing!");
+  throw new Error("Razorpay credentials not configured");
+}
+
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID as string,
-  key_secret: process.env.RAZORPAY_KEY_SECRET as string,
+  key_id: env.RAZORPAY_KEY_ID,
+  key_secret: env.RAZORPAY_KEY_SECRET,
 });
 
-/**
- * Create a new order on Razorpay
- * @param amount plan ka price (₹ me)
- * @param plan subscription type (Daily/Weekly/Monthly)
- */
-export const createOrder = async ( plan: string,amount: number) => {
+export const createOrder = async (plan: string, amount: number) => {
+  console.log("💰 Creating Razorpay order:", { plan, amount });
+  
+  // Generate a short receipt ID (max 40 chars)
+  const timestamp = Date.now();
+  const receipt = `rcpt_${timestamp}`.substring(0, 40);
+  
   const options = {
-    amount: amount * 100, // INR -> paise
+    amount: amount * 100, // Convert to paise
     currency: "INR",
-    receipt: `receipt_${plan}_${Date.now()}`,
-    notes: { plan }, // ✅ order ke sath plan bhi store
+    receipt: receipt,
+    notes: { 
+      plan,
+      timestamp: timestamp.toString()
+    },
   };
-
-  return await razorpay.orders.create(options);
+  
+  const order = await razorpay.orders.create(options as any);
+  console.log("✅ Order created:", order);
+  
+  return order;
 };
 
-/**
- * Verify payment signature from Razorpay
- * @param orderId Razorpay order id
- * @param paymentId Razorpay payment id
- * @param signature Razorpay signature
- */
 export const verifyPayment = (
   orderId: string,
   paymentId: string,
   signature: string
 ): boolean => {
-  // if (process.env.NODE_ENV === "development") {
-  //   console.log("⚠️ MOCK MODE: Skipping signature verification");
-  //   return true;
-  // }
-  const sign = orderId + "|" + paymentId;
-
-  const expectedSign = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-    .update(sign.toString())
+  const body = `${orderId}|${paymentId}`;
+  const expectedSignature = crypto
+    .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+    .update(body.toString())
     .digest("hex");
-
-  return signature === expectedSign;
-  //  return true; // yh postman mai test krne ke lie thaa !
+  return expectedSignature === signature;
 };
 
-/**
- * Calculate subscription expiry date based on plan
- * @param plan subscription type
- */
-export function calculateExpiryDate(plan: string): Date {
-  const d = new Date()
-  if (plan === "Daily Pass") d.setDate(d.getDate() + 1)
-  else if (plan === "Weekly Pass") d.setDate(d.getDate() + 7)
-  else if (plan === "Monthly Pass") d.setMonth(d.getMonth() + 1)
-  else d.setDate(d.getDate() + 1)
-  return d
+export function calculateExpiryDate(duration: string): Date {
+  const start = new Date();
+  const months = 
+    duration === "1 Month" ? 1 : 
+    duration === "3 Months" ? 3 : 
+    duration === "7 Months" ? 7 : 1;
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + months);
+
+// TESTING MODE - Set custom durations
+  // const start = new Date();
+  // const end = new Date(start);
+  // switch(duration) {
+  //   case "1 Month":
+  //     end.setMinutes(end.getMinutes() + 5); // 1 day
+  //     break;
+  //   case "3 Months":
+  //     end.setMinutes(end.getMinutes() + 15); // 3 days
+  //     break;
+  //   case "7 Months":
+  //     end.setMinutes(end.getMinutes() + 30); // 7 days
+  //     break;
+  //   default:
+  //     end.setDate(end.getDate() + 1); // Default 1 day
+  // }
+  return end;
+}
+
+export const getPaymentHistory = async (_userId: string) => {
+  return [];
 };
 
-/**
- * Get payment history for a user
- * @param userId User's unique identifier
- */
-export const getPaymentHistory = async (userId: string) => {
-  return await Payment.find({ userId }).sort({ createdAt: -1 }).lean();
-};
-
-// Fetch order by id (amount in paise from Razorpay)
 export async function fetchOrderById(orderId: string) {
-  const order = await razorpay.orders.fetch(orderId);
-  return order; // includes amount (paise), currency, status
+  return await (razorpay.orders as any).fetch(orderId);
 }

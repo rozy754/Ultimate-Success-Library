@@ -3,16 +3,21 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { DollarSign, Users, TrendingUp, Calendar, UserPlus, RefreshCw, AlertCircle } from "lucide-react"
+import { DollarSign, Users, TrendingUp, Calendar, UserPlus, RefreshCw, AlertCircle, LogOut } from "lucide-react"
 import Link from "next/link"
 import { adminApi } from "@/lib/admin-api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { api } from "@/lib/api"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 export function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dashboardData, setDashboardData] = useState<any>(null)
+  const router = useRouter()
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchDashboardStats()
@@ -29,6 +34,17 @@ export function AdminDashboard() {
       setError(err.message || "Failed to load dashboard data")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout")
+      localStorage.removeItem("user")
+      toast({ title: "Logged out" })
+      router.push("/login")
+    } catch (e: any) {
+      toast({ title: "Logout failed", description: e.message, variant: "destructive" })
     }
   }
 
@@ -61,10 +77,16 @@ export function AdminDashboard() {
           <h1 className="text-3xl font-bold text-foreground mb-2 font-serif">Admin Dashboard</h1>
           <p className="text-muted-foreground">Overview of library operations and performance metrics.</p>
         </div>
-        <Button onClick={fetchDashboardStats} variant="outline" size="sm">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={fetchDashboardStats} variant="outline" size="sm">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Button onClick={handleLogout} variant="destructive" size="sm">
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -206,6 +228,10 @@ export function AdminDashboard() {
                   <Calendar className="mr-2 h-4 w-4" />
                   Send Reminders
                 </Link>
+              </Button>
+              <Button onClick={handleLogout} variant="outline" className="w-full justify-start bg-transparent">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </Button>
             </CardContent>
           </Card>

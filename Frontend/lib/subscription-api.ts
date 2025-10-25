@@ -7,6 +7,11 @@ export interface Subscription {
   status: string
   startDate?: string
   expiryDate?: string
+  duration?: string
+  shift?: string
+  seatType?: string
+  amountPaid?: number
+  daysRemaining?: number
   [key: string]: any
 }
 

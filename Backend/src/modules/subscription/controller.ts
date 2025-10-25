@@ -46,6 +46,10 @@ export const getCurrentSubscription = async (req: Request, res: Response) => {
         razorpayOrderId: subscription.razorpayOrderId,
         razorpayPaymentId: subscription.razorpayPaymentId,
         daysRemaining,
+        duration: subscription.duration,
+        shift: subscription.shift,
+        seatType: subscription.seatType,
+        amountPaid: subscription.amountPaid,
       },
     });
   } catch (error: any) {

@@ -5,13 +5,19 @@ export interface IPayment extends Document {
   orderId: string;
   paymentId: string;
   signature: string;
-  amount: number;
+  amount: number; // final amount paid
   currency: string;
   status: "Success" | "Failed";
-  plan : string;
+  plan: string; // legacy plan name
+  // New detailed fields
+  planId?: mongoose.Types.ObjectId | null;
+  duration?: string;
+  shift?: string;
+  seatType?: string;
+  registrationIncluded?: boolean;
+  lockerIncluded?: boolean;
   createdAt: Date;
   updatedAt: Date;
-
 }
 
 const paymentSchema = new Schema<IPayment>(
@@ -23,13 +29,13 @@ const paymentSchema = new Schema<IPayment>(
     amount: { type: Number, required: true },
     currency: { type: String, required: true },
     status: { type: String, enum: ["Success", "Failed"], required: true },
-    createdAt: { type: Date },
-    updatedAt: { type: Date },
-    plan: { 
-      type: String, 
-      enum: ["Daily Pass", "Weekly Pass", "Monthly Pass"], 
-      required: true 
-    },
+    plan: { type: String, required: true },
+    planId: { type: Schema.Types.ObjectId, default: null },
+    duration: { type: String },
+    shift: { type: String },
+    seatType: { type: String },
+    registrationIncluded: { type: Boolean, default: false },
+    lockerIncluded: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

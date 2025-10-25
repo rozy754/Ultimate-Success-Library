@@ -1,28 +1,43 @@
-import { z } from "zod";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  PORT: z.coerce.number().default(5000),
-  DATABASE_URL: z.url(),
-  JWT_ACCESS_SECRET: z.string(),
-  JWT_REFRESH_SECRET: z.string(),
-  ACCESS_TOKEN_EXPIRES: z.string().default("15m"),
-  REFRESH_TOKEN_EXPIRES: z.string().default("7d"),
-  BCRYPT_SALT_ROUNDS: z.coerce.number().default(10),
-  CORS_ORIGINS: z.string().default("http://localhost:5173,http://localhost:3000"),
-  // New environment variables
-  FRONTEND_URL: z.string().url(),
-  BACKEND_URL: z.string().url(),
-  EMAIL_FROM: z.string().email(),
-  SMTP_HOST: z.string(),
-  SMTP_PORT: z.coerce.number(),
-  SMTP_USER: z.string(),
-  SMTP_PASS: z.string(),
-});
+const env = {
+  NODE_ENV: process.env.NODE_ENV || "development",
+  PORT: parseInt(process.env.PORT || "5000", 10),
+  
+  // Database
+  DATABASE_URL: process.env.DATABASE_URL || "",
+  
+  // JWT
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || "",
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "",
+  ACCESS_TOKEN_EXPIRES: process.env.ACCESS_TOKEN_EXPIRES || "15m",
+  REFRESH_TOKEN_EXPIRES: process.env.REFRESH_TOKEN_EXPIRES || "7d",
+  
+  // Bcrypt
+  BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS || "10", 10),
+  
+  // URLs
+  FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+  BACKEND_URL: process.env.BACKEND_URL || "http://localhost:5000",
+  
+  // Email
+  SMTP_HOST: process.env.SMTP_HOST || "",
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || "587", 10),
+  SMTP_USER: process.env.SMTP_USER || "",
+  SMTP_PASS: process.env.SMTP_PASS || "",
+  EMAIL_FROM: process.env.EMAIL_FROM || "",
+  
+  // Razorpay
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "",
+  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "",
+  
+  // WhatsApp
+  WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || "",
+  WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || "",
+  WHATSAPP_WABA_ID: process.env.WHATSAPP_WABA_ID || "",
+  WHATSAPP_API_URL: process.env.WHATSAPP_API_URL || "https://graph.facebook.com/v20.0",
+} as const;
 
-const env = envSchema.parse(process.env);
-(env as any).corsOrigins = env.CORS_ORIGINS.split(",").map(o => o.trim());
 export default env;

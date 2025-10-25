@@ -32,24 +32,31 @@ export const paymentApi = {
     return api.post<OrderResponse>("/payment/create-order", { plan, amount })
   },
 
-  // Accept backend-shaped payload ({ orderId, paymentId, signature, plan })
   verifyPayment: async (paymentData: {
     orderId?: string
     paymentId?: string
     signature?: string
     plan?: string
+    duration?: string
+    shift?: string
+    seatType?: string
+    amount?: number
+    addOns?: { registration?: boolean; locker?: boolean }
   }): Promise<VerifyPaymentResponse> => {
-    // normalize to backend expected keys
     const payload = {
       orderId: paymentData.orderId,
       paymentId: paymentData.paymentId,
       signature: paymentData.signature,
       plan: paymentData.plan,
+      duration: paymentData.duration,
+      shift: paymentData.shift,
+      seatType: paymentData.seatType,
+      amount: paymentData.amount,
+      addOns: paymentData.addOns,
     }
     return api.post<VerifyPaymentResponse>("/payment/verify", payload)
   },
 
-  // placeholder until backend route exists
   getPaymentHistory: async (): Promise<PaymentHistoryItem[]> => {
     return api.get<PaymentHistoryItem[]>("/payment/history")
   },

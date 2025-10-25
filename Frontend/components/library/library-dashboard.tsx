@@ -9,6 +9,7 @@ import { Calendar, Clock, Target, TrendingUp, CheckCircle, AlertCircle } from "l
 import Link from "next/link"
 import { RenewalReminderPopup } from "@/components/library/renewal-reminder-popup"
 import { subscriptionApi, Subscription } from "@/lib/subscription-api"
+import { PRICING, Duration } from "@/lib/pricing"
 
 interface UserStats {
   currentStreak: number
@@ -19,6 +20,35 @@ interface UserStats {
   subscriptionExpiry: string | null
   subscriptionType: string | null
   daysRemaining: number
+}
+
+function formatDate(d?: string | null) {
+  if (!d) return "N/A"
+  try {
+    return new Date(d).toDateString()
+  } catch {
+    return String(d)
+  }
+}
+
+function calcTotalDays(start?: string, end?: string) {
+  if (!start || !end) return 30
+  const s = new Date(start).getTime()
+  const e = new Date(end).getTime()
+  if (Number.isNaN(s) || Number.isNaN(e) || e <= s) return 30
+  return Math.ceil((e - s) / (1000 * 60 * 60 * 24))
+}
+
+function simplePlanLabel(sub: Subscription | null): string | null {
+  if (!sub) return null
+  const duration = sub.duration ?? (sub.plan?.match(/^\s*\d+\s*Month[s]?/i)?.[0] ?? "").trim()
+  return duration ? `${duration} Subscription` : sub.plan ?? null
+}
+
+function minPriceForDuration(d: Duration): number {
+  const shifts = Object.values(PRICING[d])
+  const all = shifts.flatMap((m) => Object.values(m))
+  return Math.min(...all)
 }
 
 export function LibraryDashboard() {
@@ -55,7 +85,7 @@ export function LibraryDashboard() {
           // real subscription mapping
           subscriptionStatus: sub?.status ?? "Inactive",
           subscriptionExpiry: sub?.expiryDate ?? null,
-          subscriptionType: sub?.plan ?? null,
+          subscriptionType: simplePlanLabel(sub),
           daysRemaining: sub?.daysRemaining ?? 0,
         })
       } catch (error) {
@@ -103,10 +133,11 @@ export function LibraryDashboard() {
     return () => clearInterval(intervalId)
   }, []) // run once on mount
 
-  const subscriptionPlans = [
-    { name: "Daily Pass", price: "₹50", duration: "1 Day", features: ["Full Library Access", "Study Room", "Wi-Fi"], popular: false },
-    { name: "Weekly Pass", price: "₹300", duration: "7 Days", features: ["Full Library Access", "Study Room", "Wi-Fi", "Doubt Sessions"], popular: true },
-    { name: "Monthly Pass", price: "₹1000", duration: "30 Days", features: ["Full Library Access", "Study Room", "Wi-Fi", "Doubt Sessions", "Progress Tracking"], popular: false },
+  // New duration-based plan cards
+  const durationCards = [
+    { name: "1 Month", fromPrice: minPriceForDuration("1 Month") },
+    { name: "3 Months", fromPrice: minPriceForDuration("3 Months") },
+    { name: "7 Months", fromPrice: minPriceForDuration("7 Months") },
   ]
 
   if (isLoading) {
@@ -216,15 +247,30 @@ export function LibraryDashboard() {
           <CardContent>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">{stats.subscriptionType}</h3>
-                <p className="text-muted-foreground">Expires on {stats.subscriptionExpiry}</p>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {stats.subscriptionType || "Subscription"} - Active
+                </h3>
+                <p className="text-muted-foreground">
+                  Expires on {formatDate(stats.subscriptionExpiry)}
+                </p>
                 <div className="mt-2">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm text-muted-foreground">Days remaining</span>
                     <Badge variant="outline">{stats.daysRemaining} days</Badge>
                   </div>
                   <Progress
-                    value={((30 - stats.daysRemaining) / 30) * 100}
+                    value={(() => {
+                      // Use actual duration to compute percentage
+                      const total = calcTotalDays(
+                        // we don't keep startDate in stats; infer from expiry minus remaining
+                        // but Progress only needs a stable bar; use expiry and daysRemaining if possible
+                        undefined,
+                        stats.subscriptionExpiry || undefined
+                      )
+                      const remaining = stats.daysRemaining || 0
+                      const done = Math.max(0, total - remaining)
+                      return Math.min(100, Math.round((done / total) * 100))
+                    })()}
                     className="w-full md:w-64"
                   />
                 </div>
@@ -263,42 +309,31 @@ export function LibraryDashboard() {
         {/* same as before (Goals, Progress, Feedback cards) */}
       </div>
 
-      {/* Subscription Plans */}
+      {/* Available Subscription Plans (Durations) */}
       <Card>
         <CardHeader>
           <CardTitle>Available Subscription Plans</CardTitle>
-          <p className="text-muted-foreground">Choose the plan that best fits your learning schedule</p>
+          <p className="text-muted-foreground">Pick a duration, then choose shift & seat on the next page</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {subscriptionPlans.map((plan, index) => (
+            {durationCards.map((plan, idx) => (
               <div
-                key={index}
-                className={`relative p-6 rounded-lg border ${
-                  plan.popular ? "border-primary bg-primary/5" : "border-border"
-                }`}
+                key={idx}
+                className={`relative p-6 rounded-lg border hover:shadow transition border-border`}
               >
-                {plan.popular && (
-                  <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                    Most Popular
-                  </Badge>
-                )}
                 <div className="text-center mb-4">
                   <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
                   <div className="mt-2">
-                    <span className="text-3xl font-bold text-foreground">{plan.price}</span>
-                    <span className="text-muted-foreground">/{plan.duration}</span>
+                    <span className="text-3xl font-bold text-foreground">₹{plan.fromPrice}</span>
+                    <span className="text-muted-foreground">/from</span>
                   </div>
                 </div>
-                <ul className="space-y-2 mb-6">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center text-sm">
-                      <CheckCircle className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
+                <ul className="space-y-2 mb-6 text-sm text-muted-foreground">
+                  <li>Choose shift & seat at checkout</li>
+                  <li>Optional Registration (₹150) and Locker (₹100)</li>
                 </ul>
-                <Button className="w-full" variant={plan.popular ? "default" : "outline"} asChild>
+                <Button className="w-full" asChild>
                   <Link href="/library/subscription">Choose Plan</Link>
                 </Button>
               </div>
