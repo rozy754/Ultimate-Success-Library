@@ -4,7 +4,7 @@ import Link from "next/link"
 
 export default function ServicesPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-card">
+    <div className="min-h-screen bg-linear-to-br from-background to-card">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2 mb-6">
