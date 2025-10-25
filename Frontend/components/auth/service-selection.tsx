@@ -1,13 +1,40 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, Monitor, Users, ArrowRight, Lock } from "lucide-react"
+import { api } from "@/lib/api"
+
+type User = { name: string; email: string; role?: "admin" | "student" }
 
 export function ServiceSelection() {
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const ls = localStorage.getItem("user")
+        if (ls) {
+          const parsedUser = JSON.parse(ls)
+          setUser(parsedUser)
+        }
+
+        const resp = await api.get<{ success: boolean; data: { user: User } }>("/auth/me")
+        if (resp.data.user) {
+          setUser(resp.data.user)
+          localStorage.setItem("user", JSON.stringify(resp.data.user))
+        }
+      } catch (error) {
+        console.log("API error, using localStorage")
+      }
+    }
+
+    loadUser()
+  }, [])
 
   const services = [
     {
@@ -17,7 +44,6 @@ export function ServiceSelection() {
         "Access our extensive collection of books, study materials, and quiet study spaces. Track your progress and achieve your learning goals.",
       features: ["5000+ Books", "Study Rooms", "Progress Tracking", "Daily Goals"],
       status: "active",
-      href: "/library",
       bgColor: "bg-primary/5",
       iconColor: "text-primary",
     },
@@ -28,7 +54,6 @@ export function ServiceSelection() {
         "Learn essential computer skills, programming languages, and software applications with hands-on training.",
       features: ["Programming", "Software Training", "Hands-on Labs", "Certification"],
       status: "coming-soon",
-      href: "#",
       bgColor: "bg-muted/50",
       iconColor: "text-muted-foreground",
     },
@@ -38,15 +63,28 @@ export function ServiceSelection() {
       description: "Personalized coaching sessions for competitive exams, career guidance, and skill development.",
       features: ["Personal Mentoring", "Exam Prep", "Career Guidance", "Skill Development"],
       status: "coming-soon",
-      href: "#",
       bgColor: "bg-muted/50",
       iconColor: "text-muted-foreground",
     },
   ]
 
+  const handleLibraryClick = () => {
+    if (!user) {
+      router.push("/login")
+      return
+    }
+
+    // Role-based redirect: Admin -> /admin, Student -> /library
+    if (user.role === "admin") {
+      router.push("/admin")
+    } else {
+      router.push("/library")
+    }
+  }
+
   const handleServiceClick = (service: (typeof services)[0]) => {
-    if (service.status === "active") {
-      router.push(service.href)
+    if (service.status === "active" && service.title === "Library Services") {
+      handleLibraryClick()
     }
   }
 
@@ -132,7 +170,7 @@ export function ServiceSelection() {
             <p className="text-muted-foreground mb-4">
               Begin with our Library services and unlock your potential. More services will be available soon!
             </p>
-            <Button onClick={() => router.push("/library")} size="lg" className="px-8">
+            <Button onClick={handleLibraryClick} size="lg" className="px-8">
               Start with Library
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

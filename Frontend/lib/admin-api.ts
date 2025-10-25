@@ -66,7 +66,65 @@ export interface AdminUsersResponse {
   };
 }
 
+export interface DashboardStats {
+  success: boolean;
+  data: {
+    stats: {
+      totalRevenue: number;
+      monthlyRevenue: number;
+      activeStudents: number;
+      expiringSubscriptions: number;
+      newSignups: number;
+      renewalRate: number;
+    };
+    recentActivities: Array<{
+      type: "signup" | "renewal" | "expiry";
+      user: string;
+      action: string;
+      time: string;
+    }>;
+    expiringToday: Array<{
+      name: string;
+      plan: string;
+      phone: string;
+    }>;
+  };
+}
+
+export type SeatType = "REGULAR" | "SPECIAL";
+export type OccupancyType = "FULL_DAY" | "MORNING" | "EVENING";
+
+export interface Seat {
+  _id: string;
+  seatNumber: string;
+  type: SeatType;
+  occupied: boolean;
+  occupancyType: OccupancyType | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeatsResponse {
+  success: boolean;
+  data: Seat[];
+}
+
+export interface SeatResponse {
+  success: boolean;
+  data: Seat;
+}
+
+export interface DeleteSeatsResponse {
+  success: boolean;
+  data: { deletedCount: number };
+}
+
 export const adminApi = {
+  // Get dashboard statistics
+  getDashboardStats: () => {
+    return api.get<DashboardStats>("/admin/dashboard-stats");
+  },
+
   // Get all users with filters
   getUsers: (params?: {
     search?: string;
@@ -90,7 +148,13 @@ export const adminApi = {
   getUserDetails: (userId: string) => {
     return api.get<UserDetailsResponse>(`/admin/users/${userId}`);
   },
-};
 
-adminApi.getUsers({ status: "expired" });
-adminApi.getUsers({ status: "expiring" });
+  // Seats
+  getSeats: () => api.get<SeatsResponse>("/admin/seats"),
+  updateSeat: (id: string, body: Partial<Pick<Seat, "occupied" | "occupancyType">>) =>
+    api.patch<SeatResponse>(`/admin/seats/${id}`, body),
+  addSeatsBulk: (type: SeatType, count: number) =>
+    api.post<SeatsResponse>("/admin/seats/bulk-add", { type, count }),
+  deleteSeats: (ids: string[]) =>
+    api.delWithBody<DeleteSeatsResponse>("/admin/seats", { ids }),
+};

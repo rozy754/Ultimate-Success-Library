@@ -49,5 +49,7 @@ export const api = {
   get:  <T>(p: string) => request<T>(p),
   post: <T>(p: string, body?: any) => request<T>(p, { method: "POST", body }),
   put:  <T>(p: string, body?: any) => request<T>(p, { method: "PUT", body }),
+  patch:<T>(p: string, body?: any) => request<T>(p, { method: "PATCH", body }),
   del:  <T>(p: string) => request<T>(p, { method: "DELETE" }),
+  delWithBody:<T>(p: string, body?: any) => request<T>(p, { method: "DELETE", body }),
 }
